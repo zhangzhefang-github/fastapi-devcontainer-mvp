@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  backend:
+    image: python:3.11-slim
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./logs:/app/logs
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+      - ENVIRONMENT=development
+      - DEBUG=true
+    command: >
+      bash -c "
+        pip install fastapi uvicorn python-multipart pydantic pydantic-settings requests &&
+        uvicorn app.main_unified:app --host 0.0.0.0 --port 8000 --reload
+      "
+    healthcheck:
+      test: ["CMD", "bash", "-c", "apt-get update && apt-get install -y curl && curl -f http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - app-network
+
+  frontend:
+    image: python:3.11-slim
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./frontend:/app
+    working_dir: /app
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - BACKEND_URL=http://backend:8000
+    command: >
+      bash -c "
+        apt-get update && apt-get install -y curl &&
+        pip install streamlit requests &&
+        streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+      "
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

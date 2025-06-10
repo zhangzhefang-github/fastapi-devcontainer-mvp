@@ -1,0 +1,40 @@
+# Unified Backend Dockerfile for development
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/workspace
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set work directory
+WORKDIR /workspace
+
+# Install dependencies directly
+RUN pip install \
+    python-multipart \
+    uvicorn[standard] \
+    fastapi \
+    pydantic \
+    pydantic-settings \
+    requests
+
+# Copy application code
+COPY . .
+
+# Create logs directory
+RUN mkdir -p logs
+
+# Expose port
+EXPOSE 8000
+
+# Default command for unified backend
+CMD ["uvicorn", "app.main_unified:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

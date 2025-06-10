@@ -1,0 +1,129 @@
+# Enterprise Logging Configuration for FastAPI Application
+# This file provides an alternative YAML-based logging configuration
+
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  detailed:
+    format: "%(asctime)s [%(levelname)-8s] %(name)-30s: %(message)s [%(filename)s:%(lineno)d]"
+    datefmt: "%Y-%m-%d %H:%M:%S"
+  
+  simple:
+    format: "%(levelname)s: %(message)s"
+  
+  json:
+    class: pythonjsonlogger.jsonlogger.JsonFormatter
+    format: "%(asctime)s %(name)s %(levelname)s %(message)s %(filename)s %(lineno)d"
+  
+  colored:
+    class: app.core.logging_config.ColoredFormatter
+    format: "%(asctime)s [%(levelname)-8s] %(name)-25s: %(message)s"
+    datefmt: "%H:%M:%S"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: colored
+    stream: ext://sys.stdout
+  
+  file_info:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: detailed
+    filename: logs/app.log
+    maxBytes: 10485760  # 10MB
+    backupCount: 5
+    encoding: utf8
+  
+  file_error:
+    class: logging.handlers.RotatingFileHandler
+    level: ERROR
+    formatter: detailed
+    filename: logs/error.log
+    maxBytes: 10485760  # 10MB
+    backupCount: 5
+    encoding: utf8
+  
+  file_json:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/app.json
+    maxBytes: 10485760  # 10MB
+    backupCount: 5
+    encoding: utf8
+  
+  file_performance:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/performance.log
+    maxBytes: 10485760  # 10MB
+    backupCount: 10
+    encoding: utf8
+  
+  file_security:
+    class: logging.handlers.RotatingFileHandler
+    level: INFO
+    formatter: json
+    filename: logs/security.log
+    maxBytes: 10485760  # 10MB
+    backupCount: 10
+    encoding: utf8
+
+loggers:
+  app:
+    level: DEBUG
+    handlers: [console, file_info, file_error, file_json]
+    propagate: false
+  
+  app.auth:
+    level: INFO
+    handlers: [console, file_info, file_security]
+    propagate: false
+  
+  app.api:
+    level: INFO
+    handlers: [console, file_info, file_error]
+    propagate: false
+  
+  app.performance:
+    level: INFO
+    handlers: [file_performance]
+    propagate: false
+  
+  app.security:
+    level: INFO
+    handlers: [console, file_security]
+    propagate: false
+  
+  app.errors:
+    level: ERROR
+    handlers: [console, file_error]
+    propagate: false
+  
+  uvicorn:
+    level: INFO
+    handlers: [console, file_info]
+    propagate: false
+  
+  uvicorn.access:
+    level: INFO
+    handlers: [file_info]
+    propagate: false
+  
+  sqlalchemy:
+    level: WARNING
+    handlers: [console, file_info]
+    propagate: false
+  
+  alembic:
+    level: INFO
+    handlers: [console, file_info]
+    propagate: false
+
+root:
+  level: INFO
+  handlers: [console]
